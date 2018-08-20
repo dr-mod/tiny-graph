@@ -20,7 +20,7 @@ class Node
     @name
   end
 
-  def edgeTo(node)
+  def edge_to(node)
     Edge.new(self, node)
   end
 
@@ -58,63 +58,60 @@ end
 
 class Entry
   include WeightComparable
-  attr_accessor :previous, :weight
+  attr_accessor :previous, :weight, :node
   
-  def initialize()
+  def initialize(node)
+    @node = node
     @weight = Float::INFINITY
   end
   
   def to_s
-    "#{previous} #{weight}"
+    "Node:#{node}, Weight:#{weight}, Prev:#{previous}"
   end
 end
 
-def shortestPath(nodes, start_node)
-  table = nodes.map { |node| [node, Entry.new] }.to_h
+def shortest_path(nodes, start_node)
+  table = nodes.map { |node| [node, Entry.new(node)] }.to_h
   table[start_node].weight = 0
 
   unvisited_nodes = nodes.clone
   
-  nodes.each {|node| node.edges.sort}
-  
   while unvisited_nodes.any?
-    active_node = unvisited_nodes.map {|node| table[node]}.sort.first #TODO: select the node with the lowest weight
+    active_node = unvisited_nodes.map {|node| table[node]}.sort.first.node
     unvisited_nodes.delete(active_node)
     
     edges_to_follow = active_node.edges.select{ |edge| unvisited_nodes.include? edge.other_node(active_node)}
     
-    puts edges_to_follow
-    
     edges_to_follow.each do |edge|
-      weight = edge.weight
+      combined_weight = edge.weight + table[active_node].weight
       node = edge.other_node(active_node)
       entry = table[node] 
       
-      if entry.weight > weight 
-        entry.weight = weight
-        entry.previous = node
+      if entry.weight > combined_weight
+        entry.weight = combined_weight
+        entry.previous = active_node
       end
     end
   end
   
-  table
+  table.values
 end
 
 
 n = ["A", "B", "C", "D", "E"].map { |name| [name, Node.new(name)] }.to_h
 
-n["A"].edgeTo(n["B"]).set_weight(6)
-n["A"].edgeTo(n["D"]).set_weight(1)
+n["A"].edge_to(n["B"]).set_weight(6)
+n["A"].edge_to(n["D"]).set_weight(1)
 
-n["B"].edgeTo(n["D"]).set_weight(2)
-n["B"].edgeTo(n["E"]).set_weight(2)
-n["B"].edgeTo(n["C"]).set_weight(5)
+n["B"].edge_to(n["D"]).set_weight(2)
+n["B"].edge_to(n["E"]).set_weight(2)
+n["B"].edge_to(n["C"]).set_weight(5)
 
-n["C"].edgeTo(n["E"]).set_weight(5)
+n["C"].edge_to(n["E"]).set_weight(5)
 
-n["D"].edgeTo(n["E"]).set_weight(1)
+n["D"].edge_to(n["E"]).set_weight(1)
 
 
-shortestPath(n.values, n["A"]).each do |key, value|
-  puts "#{key} #{value}"
+shortest_path(n.values, n["A"]).each do |entry|
+  puts entry
 end
